@@ -1,4 +1,4 @@
-package com.github.kafka.managers;
+package com.github.kafka.managers.consumer;
 
 import com.github.kafka.handlers.KafkaConsumerMessageHandler;
 import com.github.kafka.config.KafkaConsumerConfig;
@@ -8,7 +8,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -22,12 +21,26 @@ public class KafkaConsumerManagerImpl implements KafkaConsumerManager {
     private final Map<String, KafkaConsumerConfig> consumerConfigs = new HashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    @Value("${kafka.consumer.poll-duration-ms}")
-    private int pollDurationMs;
-
     @Override
-    public void registerHandler(String cluster, List<String> topics, String username, String password, String server, String groupId, KafkaConsumerMessageHandler handler) {
-        consumerConfigs.computeIfAbsent(cluster, k -> new KafkaConsumerConfig(cluster, topics, username, password, server, groupId)).addHandler(handler);
+    public void registerHandler(
+            String cluster,
+            List<String> topics,
+            String username,
+            String password,
+            String server,
+            String groupId,
+            KafkaConsumerMessageHandler handler
+    ) {
+        consumerConfigs.computeIfAbsent(cluster,
+                k -> new KafkaConsumerConfig(
+                        cluster,
+                        topics,
+                        username,
+                        password,
+                        server,
+                        groupId
+                )
+        ).addHandler(handler);
     }
 
     @Override
@@ -68,7 +81,7 @@ public class KafkaConsumerManagerImpl implements KafkaConsumerManager {
             logger.info("Listening on topics: " + config.getTopics() + " from cluster " + config.getCluster());
 
             while (true) {
-                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(pollDurationMs));
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
                 for (ConsumerRecord<String, String> record : records) {
                     logger.info("Received message from cluster " + config.getCluster() + ": topic=" + record.topic() + ", value=" + record.value());
                     try {
