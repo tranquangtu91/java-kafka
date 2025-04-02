@@ -1,6 +1,7 @@
-package com.github.kafka.example;
+package com.github.kafka.example.consumer;
 
-import com.github.kafka.managers.KafkaConsumerManager;
+import com.github.kafka.managers.consumer.KafkaConsumerManager;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.env.Environment;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 @Component
 public class KafkaConsumerExample implements CommandLineRunner {
+    @Getter
     public static class KafkaClusterConfig {
         private final String cluster;
         private final String brokers;
@@ -32,13 +34,6 @@ public class KafkaConsumerExample implements CommandLineRunner {
             this.password = password;
             this.groupId = groupId;
         }
-
-        public String getCluster() { return cluster; }
-        public String getBrokers() { return brokers; }
-        public String getTopics() { return topics; }
-        public String getUsername() { return username; }
-        public String getPassword() { return password; }
-        public String getGroupId() { return groupId; }
     }
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerExample.class);
 
@@ -64,8 +59,13 @@ public class KafkaConsumerExample implements CommandLineRunner {
             logger.info("Registering consumer for cluster: " + clusterConfig.getCluster() + " with topics: " + topics + "");
 
             // register callback handler for each consumer
-            kafkaConsumerManager.registerHandler(clusterConfig.getCluster(), topics, clusterConfig.getUsername(), clusterConfig.getPassword(),
-                    clusterConfig.getBrokers(), clusterConfig.getGroupId(),
+            kafkaConsumerManager.registerHandler(
+                    clusterConfig.getCluster(),
+                    topics,
+                    clusterConfig.getUsername(),
+                    clusterConfig.getPassword(),
+                    clusterConfig.getBrokers(),
+                    clusterConfig.getGroupId(),
                     (topic, key, value) -> logger.info("Received from topic " + clusterConfig.getCluster() + ": " + topic + " " + value));
         }
 
@@ -83,7 +83,8 @@ public class KafkaConsumerExample implements CommandLineRunner {
                 getRequiredProperty(prefix + "topics"),
                 environment.getProperty(prefix + "username"),
                 environment.getProperty(prefix + "password"),
-                getRequiredProperty(prefix + "group-id"));
+                getRequiredProperty(prefix + "group-id")
+                );
     }
 
     private String getRequiredProperty(String key) {
