@@ -12,24 +12,26 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 @Service
 public class KafkaConsumerManagerImpl implements KafkaConsumerManager {
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerManagerImpl.class);
     private final Map<String, KafkaConsumerConfig> consumerConfigs = new HashMap<>();
+    private final Map<String, KafkaConsumerMessageHandler> clusterTopicHandlers = new HashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Override
-    public void registerHandler(
+    public void registerCluster(
             String cluster,
             List<String> topics,
             String username,
             String password,
             String server,
-            String groupId,
-            KafkaConsumerMessageHandler handler
+            String groupId
     ) {
         consumerConfigs.computeIfAbsent(cluster,
                 k -> new KafkaConsumerConfig(
@@ -40,7 +42,21 @@ public class KafkaConsumerManagerImpl implements KafkaConsumerManager {
                         server,
                         groupId
                 )
-        ).addHandler(handler);
+        );
+    }
+
+    @Override
+    public void registerHandler(
+            String cluster,
+            String topic,
+            KafkaConsumerMessageHandler handler
+    ) {
+        if (!consumerConfigs.containsKey(cluster)) {
+            logger.error("Cluster " + cluster + " is not registered!");
+            return;
+        }
+
+        clusterTopicHandlers.computeIfAbsent(cluster + "_" + topic, k -> handler);
     }
 
     @Override
@@ -85,8 +101,12 @@ public class KafkaConsumerManagerImpl implements KafkaConsumerManager {
                 for (ConsumerRecord<String, String> record : records) {
                     logger.info("Received message from cluster " + config.getCluster() + ": topic=" + record.topic() + ", value=" + record.value());
                     try {
-                        for (KafkaConsumerMessageHandler handler : config.getHandlers()) {
-                            handler.onMessage(record.topic(), record.key(), record.value());
+                        String topic = record.topic();
+                        KafkaConsumerMessageHandler handler = clusterTopicHandlers.get(config.getCluster() + "_" + topic);
+                        if (handler != null) {
+                            handler.onMessage(topic, record.key(), record.value());
+                        } else {
+                            logger.warn("No handler found for topic: " + topic);
                         }
                         consumer.commitSync();
                         logger.info("Message from cluster " + config.getCluster() + " processed successfully");

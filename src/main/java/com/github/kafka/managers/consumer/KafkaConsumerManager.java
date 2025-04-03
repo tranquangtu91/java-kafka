@@ -6,13 +6,19 @@ import java.util.List;
 
 public interface KafkaConsumerManager {
     // register callback for a consumer
-    void registerHandler(
+    void registerCluster(
             String cluster,
             List<String> topics,
             String username,
             String password,
             String server,
-            String groupId,
+            String groupId
+    );
+
+    // register callback for a consumer
+    void registerHandler(
+            String cluster,
+            String topic,
             KafkaConsumerMessageHandler handler
     );
 

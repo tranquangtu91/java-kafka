@@ -7,8 +7,10 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Configuration
 public class KafkaProducerConfig {
+    @Value("${kafka.producer.cluster}")
+    private String cluster;
     @Value("${kafka.clusterA.broker}")
-    private String bootstrapServers;
+    private String brokerUrl;
     @Value("${kafka.clusterA.username}")
     private String username;
     @Value("${kafka.clusterA.password}")
