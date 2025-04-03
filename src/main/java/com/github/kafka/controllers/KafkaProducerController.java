@@ -19,8 +19,8 @@ public class KafkaProducerController {
 
     // API testing publish message to Kafka
     @GetMapping("/produce")
-    public String produceMessage(@RequestParam String topic, @RequestParam String key, @RequestParam String message) {
-        kafkaProducerService.sendMessage(topic, key, message);
+    public String produceMessage(@RequestParam String cluster, @RequestParam String topic, @RequestParam String key, @RequestParam String message) {
+        kafkaProducerService.sendMessage(cluster, topic, key, message);
         return "Message sent to Kafka with key: " + key;
     }
 }

@@ -8,25 +8,26 @@ import org.springframework.kafka.core.ProducerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class KafkaProducerManagerImpl implements KafkaProducerManager {
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final Map<String, KafkaTemplate<String, String>> kafkaTemplates = new ConcurrentHashMap<>();
 
-    public KafkaProducerManagerImpl(String bootstrapServers, String username, String password, String ackMode) {
-
+    @Override
+    public void registerCluster(String cluster, String brokerUrl, String username, String password, String ackMode) {
         // Set up producer properties
-        Map<String, Object> producerProps = getKafkaProperties(bootstrapServers, username, password, ackMode);
+        Map<String, Object> producerProps = getKafkaProperties(brokerUrl, username, password, ackMode);
 
         // Create producer factory
         ProducerFactory<String, String> producerFactory = new DefaultKafkaProducerFactory<>(producerProps);
 
         // Initialize KafkaTemplate
-        this.kafkaTemplate = new KafkaTemplate<>(producerFactory);
+        kafkaTemplates.computeIfAbsent(cluster, (k) -> new KafkaTemplate<>(producerFactory));
     }
 
-    private Map<String, Object> getKafkaProperties(String bootstrapServers, String username, String password, String ackMode) {
+    private Map<String, Object> getKafkaProperties(String brokerUrl, String username, String password, String ackMode) {
         Map<String, Object> producerProps = new HashMap<>();
-        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerUrl);
         producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerProps.put(ProducerConfig.ACKS_CONFIG, ackMode);
@@ -41,7 +42,9 @@ public class KafkaProducerManagerImpl implements KafkaProducerManager {
     }
 
     @Override
-    public void sendMessage(String topic, String key, String message) {
-        kafkaTemplate.send(topic, key, message);
+    public void sendMessage(String cluster, String topic, String key, String message) {
+        if (kafkaTemplates.containsKey(cluster)) {
+            kafkaTemplates.get(cluster).send(topic, key, message);
+        }
     }
 }

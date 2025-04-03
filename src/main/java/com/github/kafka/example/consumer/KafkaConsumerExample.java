@@ -58,15 +58,24 @@ public class KafkaConsumerExample implements CommandLineRunner {
             List<String> topics = Arrays.asList(clusterConfig.getTopics().split(","));
             logger.info("Registering consumer for cluster: " + clusterConfig.getCluster() + " with topics: " + topics + "");
 
-            // register callback handler for each consumer
-            kafkaConsumerManager.registerHandler(
+            // register cluster
+            kafkaConsumerManager.registerCluster(
                     clusterConfig.getCluster(),
                     topics,
                     clusterConfig.getUsername(),
                     clusterConfig.getPassword(),
                     clusterConfig.getBrokers(),
-                    clusterConfig.getGroupId(),
-                    (topic, key, value) -> logger.info("Received from topic " + clusterConfig.getCluster() + ": " + topic + " " + value));
+                    clusterConfig.getGroupId()
+            );
+
+            for (String topicName : topics) {
+                // register callback handler for each consumer
+                kafkaConsumerManager.registerHandler(
+                        clusterConfig.getCluster(),
+                        topicName,
+                        (topic, key, value) -> logger.info("Received from topic " + clusterConfig.getCluster() + ": " + topic + " " + value));
+            }
+
         }
 
         // start consumer
