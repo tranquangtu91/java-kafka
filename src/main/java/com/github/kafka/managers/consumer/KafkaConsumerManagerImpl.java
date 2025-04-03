@@ -77,12 +77,18 @@ public class KafkaConsumerManagerImpl implements KafkaConsumerManager {
 
         props.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, "false");
 
-        // SASL settings
-        props.put("security.protocol", "SASL_PLAINTEXT");
-        props.put("sasl.mechanism", "PLAIN");
-        props.put("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required "
-                + "username=\"" + config.getUsername() + "\" "
-                + "password=\"" + config.getPassword() + "\";");
+        String kafkaUsername = config.getUsername();
+        String kafkaPassword = config.getPassword();
+
+        if (kafkaUsername != null && kafkaPassword != null) {
+            // SASL settings
+            props.put("security.protocol", "SASL_PLAINTEXT");
+            props.put("sasl.mechanism", "PLAIN");
+            props.put("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required "
+                    + "username=\"" + kafkaUsername + "\" "
+                    + "password=\"" + kafkaPassword + "\";");
+        }
+
         return props;
     }
 
