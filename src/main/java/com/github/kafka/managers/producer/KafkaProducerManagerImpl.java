@@ -32,11 +32,13 @@ public class KafkaProducerManagerImpl implements KafkaProducerManager {
         producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerProps.put(ProducerConfig.ACKS_CONFIG, ackMode);
 
-        producerProps.put("security.protocol", "SASL_PLAINTEXT");
-        producerProps.put("sasl.mechanism", "PLAIN");
-        producerProps.put("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required "
-                + "username=\"" + username + "\" "
-                + "password=\"" + password + "\";");
+        if (username != null && password != null) {
+            producerProps.put("security.protocol", "SASL_PLAINTEXT");
+            producerProps.put("sasl.mechanism", "PLAIN");
+            producerProps.put("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required "
+                    + "username=\"" + username + "\" "
+                    + "password=\"" + password + "\";");
+        }
 
         return producerProps;
     }
